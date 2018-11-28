@@ -26,28 +26,16 @@
 #
 # The YCB team!
 
-# Variables Globales
-TITLE="YCBGuard - https://github.com/ycbfree"
-user_id="1000"
-logfile="/home/pi/log.txt"
-ycb_works="/home/pi/.works"
-# IODINE Config
-pass_iodine="qwe123"
-domain_iodine="t1.ycbfree.com"
-# FQDN
-#dns_server="192.168.1.13"
-fqdn_check="www.google.cl"
-# TCPDUMP
-timeout_tcpdump="120"
-arp_pcap="$ycb_works/arp.pcap"
+# Read Configuration file
+configfile='./config.cfg'
+configfile_secured='./secure-config.cfg'
 
-# Networki Interfaces
-int="eth0"
-wifi="wlan0"
-ip_addr=""
+if egrep -q -v '^#|^[^ ]*=[^;]*' "$configfile"; then
+	egrep '^#|^[^ ]*=[^;&]*'  "$configfile" > "$configfile_secured"
+	configfile="$configfile_secured"
+fi
+source "$configfile"
 
-# Write log
-debug=0
 function _write_log()
 {
 	if [ "$debug" ==  "1" ]; then   
@@ -400,7 +388,7 @@ function _squid_proxy()
 		else
 			_write_log "[ERROR] Tunnel is Down, starting"
 			sleep 2
-			`screen -dm bash -c "ssh -f -N -T -L3128:127.0.0.1:3128 10.0.1.1 -o ConnectTimeout=10"`
+			`screen -dm bash -c "ssh -f -N -T -L0.0.0.0:3128:127.0.0.1:3128 10.0.1.1 -o ConnectTimeout=10"`
 			_write_log "[OK] Tunnel HTTP/s Proxy is Done!"
 		fi
 	fi
@@ -449,30 +437,39 @@ function _stop_all()
 # Verifiamos que las variables esten definidas
 if [ -z "$TITLE" ]; then
 	_write_log "[ERROR] Please set variable 'TITLE'";
+	die
 elif
    [ -z "$logfile" ]; then
 	_write_log "[ERROR] Please set variable 'logfile'";
+	die
 elif
    [ -z "$ycb_works" ]; then
 	_write_log "[ERROR] Please set variable 'ycb_works'";
+	die
 elif
    [ -z "$pass_iodine" ]; then
 	_write_log "[ERROR] Please set variable 'pass_iodine'";
+	die
 elif
    [ -z "$domain_iodine" ]; then
 	_write_log "[ERROR] Please set variable 'domain_iodine'";
+	die
 elif
    [ -z "$fqdn_check" ]; then
 	_write_log "[ERROR] Please set variable 'fqdn_check'";
+	die
 elif
    [ -z "$arp_pcap" ]; then
 	_write_log "[ERROR] Please set variable 'arp_pcap'";
+	die
 elif
    [ -z "$int" ]; then
 	_write_log "[ERROR] Please set variable 'int'";
+	die
 elif
    [ -z "$debug" ]; then
 	_write_log "[ERROR] Please set variable 'debug'";
+	die
 fi
 
 # Main
