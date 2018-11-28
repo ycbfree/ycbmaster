@@ -424,11 +424,21 @@ function _stop_all()
 		_write_log "[OK] Remove /etc/resolv.conf"
 		`echo "" | sudo tee /etc/resolv.conf` > /dev/null 2>&1
 		;;
+
+	all)
+		_write_log "[OK] Remove all environment settings"
+		`sudo systemctl stop tor`
+		`ps aux|grep -i iodine|grep -v grep|awk '{print $2}'|xargs sudo kill -9`
+		`ps aux|grep -i 3128|grep -v grep|awk '{print $2}'|xargs kill -9`
+		`echo "" | sudo tee /etc/resolv.conf` > /dev/null 2>&1
+		;;
 	*) 
 		_write_log "add an option to stop a service:"
 		_write_log " tor"
 		_write_log " squid"
+		_write_log " dnstunnel"
 		_write_log " resolv.conf"
+		_write_log " all - all environment setings"
 		;;
 	esac
 }
