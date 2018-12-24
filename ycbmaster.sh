@@ -27,8 +27,8 @@
 # The YCB team!
 
 # Read Configuration file
-configfile='./config.cfg'
-configfile_secured='./secure-config.cfg'
+configfile='/home/pi/ycbmaster/config.cfg'
+configfile_secured='/home/pi/ycbmaster/secure-config.cfg'
 
 if egrep -q -v '^#|^[^ ]*=[^;]*' "$configfile"; then
 	egrep '^#|^[^ ]*=[^;&]*'  "$configfile" > "$configfile_secured"
@@ -36,6 +36,7 @@ if egrep -q -v '^#|^[^ ]*=[^;]*' "$configfile"; then
 fi
 source "$configfile"
 
+# Write Log
 function _write_log()
 {
 	if [ "$debug" ==  "1" ]; then   
@@ -348,9 +349,14 @@ function _dns_tunneling()
 	_write_log "[-] Enable DnsTunneling"
 	get_proc_dns=`ps aux|grep -i iodine|grep -v grep|awk '{print $2}'`
 	if [[ $get_proc_dns == "" ]]; then
-		_write_log "[Error] Tunnel is Down, Up Now!"
-		sleep 2
-		`screen -dm bash -c "sudo iodine -f -P $pass_iodine $domain_iodine"`
+		if grep -q nameserver "/etc/resolv.conf"; then
+			_write_log "[Error] Tunnel is Down, Up Now!"
+			_write_log "$pass_iodine $domain_iodine"
+			`screen -dm bash -c "sudo iodine -f -P $pass_iodine $domain_iodine"`
+			sleep 2
+		else
+			_write_log "[Error] /etc/resolv.conf its blank!"
+		fi
 	else
 		_write_log "[OK] DNS Tunneling is UP"
 	fi
@@ -427,9 +433,9 @@ function _stop_all()
 
 	all)
 		_write_log "[OK] Remove all environment settings"
-		`sudo systemctl stop tor`
-		`ps aux|grep -i iodine|grep -v grep|awk '{print $2}'|xargs sudo kill -9`
-		`ps aux|grep -i 3128|grep -v grep|awk '{print $2}'|xargs kill -9`
+		`sudo systemctl stop tor > /dev/null 2>&1`
+		`ps aux|grep -i iodine|grep -v grep|awk '{print $2}'|xargs sudo kill -9 > /dev/null 2>&1`
+		`ps aux|grep -i 3128|grep -v grep|awk '{print $2}'|xargs kill -9 > /dev/null 2>&1`
 		`echo "" | sudo tee /etc/resolv.conf` > /dev/null 2>&1
 		;;
 	*) 
